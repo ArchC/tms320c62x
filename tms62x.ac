@@ -1,0 +1,17 @@
+AC_ARCH(tmsc62x){
+
+  ac_wordsize 32;
+
+  ac_cache   MEM:5M;
+
+  ac_regbank RB_A:16;
+  ac_regbank RB_B:16;  
+	ac_regbank RB_C:20;
+  
+  ARCH_CTOR(tmsc62x) {
+
+    ac_isa("tmsc62x_isa.ac");
+    set_endian("big"); 
+
+  };
+};

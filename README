@@ -1,0 +1,29 @@
+*****************************************************************
+* ESTA EH UMA VERSAO PRELIMINAR DESTE MODELO.
+* NAO DEVE IR A  DOMINIO PUBLICO !!!
+*****************************************************************
+This is the TMS320c62x ArchC functional model.
+
+You must generate the simulator using at least these two
+ACSIM command-line options:
+
+acsim tms62x.ac 
+
+Build the simulator using:
+
+make -f Makefile.archc
+
+Running applications on the simulator:
+
+tms62x.x --load_obj=<binary-file-path>   --> For binary application files
+tms62x.x --load=<hexadecimal-file-path>  --> For hexa files in ArchC format
+
+For more information run acsim --help or visit
+http://www.archc.org
+
+
+*****************************************************************
+* TO DO
+*****************************************************************
+- Para executar os branches preciso de controle sobre os fetch packets.
+- Preciso identificar paralelismo para poder controlar os delay slots dos branches

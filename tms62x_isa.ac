@@ -1,0 +1,577 @@
+/////////////////////////////////////////////////////////////////////////////////////////////
+// This is the ArchC ISA description for the TMS320C62x DSP processor
+//
+// Author: Sandro Rigo
+// 
+// Here are some instructions to improve your readability of this code:
+//
+// Several instructions share the same mnemonic in the TMSC62x architecture, but have
+// different opcodes.So, they are actually different instructions for the decoder.
+//
+// Here is our instruction name convention adopted in this model:
+// name = mnemonic_unit_opstring
+//       Where opstring is a string obtained from the operand types. For example,
+//       an add where src1,sr2,dst are  int, long, cst, respectively, will have 
+//       opstring = ilc. Notice that this stands for both signed and unsigned values.
+//
+// EXAMPLE: last instruction from the table in page 3-30 of TMSC6000 manual will be named as
+//          add_d_ici
+//
+// When _unit and/or _opstring can be omited without generating ambiguity, it is done.
+//
+// For instructions where the _unit part is omited, you can easily figure out where it is 
+// executed by looking at its format. For example, we know that the addu_iil instruction
+// is executed in the L unit, because it uses the L_Oper format.
+////////////////////////////////////////////////////////////////////////////////////////////
+
+AC_ISA(tmsc62x){
+
+
+  ac_format S_Oper = "%creg:3 %z:1 %dst:5 %src2:5 %src1:5 %x:1    %op_s:6  %op_s2:4 %s:1 %p:1";
+  ac_format D_Oper = "%creg:3 %z:1 %dst:5 %src2:5 %src1:5         %op_d:6  %op_d2:5 %s:1 %p:1";
+  ac_format M_Oper = "%creg:3 %z:1 %dst:5 %src2:5 %src1:5 %x:1    %op_m:5  %op_m2:5 %s:1 %p:1";
+  ac_format L_Oper = "%creg:3 %z:1 %dst:5 %src2:5 %src1:5 %x:1    %op_l:7  %op_l2:3 %s:1 %p:1";
+  ac_format SK_Oper= "%creg:3 %z:1 %dst:5 %cst:16:s                        %op_sk:5 %s:1 %p:1";
+	ac_format Branch = "%creg:3 %z:1 %cst_b:21:s                              %op_b:5 %s:1 %p:1";
+	ac_format K_Oper = "%creg:3 %z:1 %dst:5 %src2:5 %csta:5 %cstb:5           %op_k:6 %s:1 %p:1";
+	ac_format IDLE_Oper = "%creg:3 %z:1 %res:10                                        %op_idle:16 %s:1 %p:1";
+	ac_format NOP_Oper = "%creg:3 %z:1 %res:10  %op_n1:1 %src:4                        %op_n2:12        %p:1";
+	ac_format D_LDST_BaseR = "%creg:3 %z:1 %dst:5 %baseR:5 %offsetR:5 %mode:4 %r:1 %y:1 %ld_st:3 %op_ld:2 %s:1 %p:1";
+	ac_format D_LDST_K  = "%creg:3 %z:1 %dst:5 %ucst:15                           %y:1 %ld_st:3 %op_ld:2 %s:1 %p:1";
+
+
+	//Operations on L unit
+  ac_instr<L_Oper> add_l_iii, add_l_iil, add_l_ill, add_l_cii, add_l_cll;
+	ac_instr<L_Oper> addu_iil, addu_ill;     
+  ac_instr<L_Oper> sub_l_iii, sub_l_xiii, sub_l_iil, sub_l_xiil, sub_l_cii, sub_l_cll;
+	ac_instr<L_Oper> subu_iil, subu_xiil;     
+  ac_instr<L_Oper> abs_ii, abs_ll, sadd_iii, sadd_ill, sadd_cii, sadd_cll;
+	ac_instr<L_Oper> ssub_iii, ssub_xiii, ssub_cii, ssub_cll, subc;
+  ac_instr<L_Oper> and_l_iii, and_l_cii, or_l_iii, or_l_cii,  xor_l_iii, xor_l_cii;
+  ac_instr<L_Oper> cmpeq_iii, cmpeq_cii, cmpeq_ili, cmpeq_cli;
+	ac_instr<L_Oper> cmpgt_iii, cmpgt_cii, cmpgt_ili, cmpgt_cli;
+	ac_instr<L_Oper> cmpgtu_iii, cmpgtu_cii, cmpgtu_ili, cmpgtu_cli;
+	ac_instr<L_Oper> cmplt_iii, cmplt_cii, cmplt_ili, cmplt_cli;
+	ac_instr<L_Oper> cmpltu_iii, cmpltu_cii, cmpltu_ili, cmpltu_cli;
+  ac_instr<L_Oper> lmbd_iii, lmbd_cii, norm_ii, norm_li, sat;
+
+	//Operations on M unit
+  ac_instr<M_Oper> mpy, mpy_k, mpyu, mpyus, mpysu, mpysu_k, mpyh, mpyhu, mpyhus, mpyhsu;
+  ac_instr<M_Oper> mpyhl, mpyhlu, mpyhuls, mpyhslu, mpylh, mpylhu, mpyluhs, mpylshu;
+  ac_instr<M_Oper> smpy, smpyh, smpyhl, smpylh;
+
+  //Operations on D unit
+  ac_instr<D_Oper> add_d_iii, add_ici;
+	ac_instr<D_Oper> addab_iii, addah_iii, addaw_iii;
+	ac_instr<D_Oper> addab_ici, addah_ici, addaw_ici;
+  ac_instr<D_Oper> sub_d_iii, sub_d_ici; 
+	ac_instr<D_Oper> subab_iii, subab_ici, subah_iii, subah_ici, subaw_iii, subaw_ici;
+
+	//Operations on S unit
+  ac_instr<S_Oper> add_s_iii, add_s_cii, add2;
+  ac_instr<S_Oper> clr;
+  ac_instr<S_Oper> ext, extu, and_s_iii, and_s_cii, or_s_iii, or_s_cii, xor_s_iii, xor_s_cii;
+  ac_instr<S_Oper> mvc_cr, mvc_rc;
+  ac_instr<S_Oper> set_field, sshl_iii, sshl_ici;
+  ac_instr<S_Oper> shl_iii, shl_lil, shl_iil, shl_ici, shl_lcl, shl_icl;
+  ac_instr<S_Oper> shr_iii, shr_lil, shr_ici, shr_lcl;
+  ac_instr<S_Oper> shru_iii, shru_lil, shru_ici, shru_lcl;
+  ac_instr<S_Oper> sub_s_iii, sub_s_cii, sub2;
+  ac_instr<K_Oper> ext_k, extu_k, clr_k, set_k;
+
+	//Operations with constants on S unit
+  ac_instr<SK_Oper> addk, mvk, mvkh;  //It seems that mvkh and mvklh are the same instruction
+ 
+	//Branches
+	ac_instr<Branch> b_lab;
+	ac_instr<S_Oper> b_reg, b_irp, b_nrp;
+
+	//NOP instructions
+	ac_instr<IDLE_Oper> idle;
+	ac_instr<NOP_Oper> nop;
+
+	//Load/Store Operations
+	ac_instr<D_LDST_BaseR> ldb, ldbu, ldh, ldhu, ldw;
+	ac_instr<D_LDST_K> ldb_k, ldbu_k, ldh_k, ldhu_k, ldw_k;
+	ac_instr<D_LDST_BaseR> stb, sth, stw;
+	ac_instr<D_LDST_K> stb_k, sth_k, stw_k;
+	
+  ISA_CTOR(tmsc62x){
+
+    abs_ii.set_asm("abs .%unit %src2, %dst");   //How to identify units when generating assemblers?
+    abs_ii.set_decoder(op_l2=0x6, op_l=0x1A);
+    
+    abs_ll.set_asm("abs .%unit %src2, %dst");
+    abs_ll.set_decoder(op_l2=0x6, op_l=0x38);
+    
+    add_l_iii.set_asm("add .%unit %src1, %src2, %dst"); 
+    add_l_iii.set_decoder(op_l2=0x6, op_l=0x03);
+
+    add_l_iil.set_asm("add .%unit %src1, %src2, %dst"); 
+    add_l_iil.set_decoder(op_l2=0x6, op_l=0x23);
+
+    add_l_ill.set_asm("add .%unit %src1, %src2, %dst"); 
+    add_l_ill.set_decoder(op_l2=0x6, op_l=0x21);
+
+    add_l_cii.set_asm("add .%unit %src1, %src2, %dst"); 
+    add_l_cii.set_decoder(op_l2=0x6, op_l=0x02);
+
+    add_l_cll.set_asm("add .%unit %src1, %src2, %dst"); 
+    add_l_cll.set_decoder(op_l2=0x6, op_l=0x20);
+
+    addu_iil.set_asm("addu .%unit %src1, %src2, %dst"); 
+    addu_iil.set_decoder(op_l2=0x6, op_l=0x2B);
+
+    addu_ill.set_asm("addu .%unit %src1, %src2, %dst"); 
+    addu_ill.set_decoder(op_l2=0x6, op_l=0x29);
+
+    add_s_iii.set_asm("add .%unit %src1, %src2, %dst");
+    add_s_iii.set_decoder(op_s2=0x08, op_s=0x07);
+
+    add_s_cii.set_asm("add .%unit %src1, %src2, %dst");
+    add_s_cii.set_decoder(op_s2=0x08, op_s=0x06);
+
+    add_d_iii.set_asm("add .%unit %src1, %src2, %dst");
+    add_d_iii.set_decoder(op_d2=0x10, op_d=0x10);
+
+    add_ici.set_asm("add .%unit %src1, %src2, %dst");
+    add_ici.set_decoder(op_d2=0x10, op_d=0x12);
+
+    addab_iii.set_asm("addab .%unit %src1, %src2, %dst");
+    addab_iii.set_decoder(op_d2=0x10, op_d=0x30);
+
+    addah_iii.set_asm("addab .%unit %src1, %src2, %dst");
+    addah_iii.set_decoder(op_d2=0x10, op_d=0x34);
+
+    addaw_iii.set_asm("addab .%unit %src1, %src2, %dst");
+    addaw_iii.set_decoder(op_d2=0x10, op_d=0x38);
+
+    addab_ici.set_asm("addab .%unit %src1, %src2, %dst");
+    addab_ici.set_decoder(op_d2=0x10, op_d=0x32);
+
+    addah_ici.set_asm("addab .%unit %src1, %src2, %dst");
+    addah_ici.set_decoder(op_d2=0x10, op_d=0x36);
+
+    addaw_ici.set_asm("addab .%unit %src1, %src2, %dst");
+    addaw_ici.set_decoder(op_d2=0x10, op_d=0x3A);
+
+    addk.set_asm("addk .%unit %cst, %dst");
+    addk.set_decoder(op_sk=0x14);
+
+    add2.set_asm("add2 .%unit %src1, %src2, %dst");
+    add2.set_decoder(op_s2=0x08, op_s=0x01);
+
+    and_l_iii.set_asm("and .%unit %src1, %src2, %dst");
+    and_l_iii.set_decoder(op_l2=0x6, op_l=0x7B);
+
+    and_l_cii.set_asm("and .%unit %src1, %src2, %dst");
+    and_l_cii.set_decoder(op_l2=0x6, op_l=0x7A);
+
+    and_s_iii.set_asm("and .%unit %src1, %src2, %dst");
+    and_s_iii.set_decoder(op_s2=0x08, op_s=0x1F);
+
+    and_s_cii.set_asm("and .%unit %src1, %src2, %dst");
+    and_s_cii.set_decoder(op_s2=0x08, op_s=0x1E);
+
+    b_lab.set_asm("b .%unit %cst");
+    b_lab.set_decoder(op_b=0x04);
+
+    b_reg.set_asm("b .%unit %src2");
+    b_reg.set_decoder(op_s2=0x08, op_s=0x0D);
+
+    b_irp.set_asm("b .%unit IRP");
+    b_irp.set_decoder(op_s2=0x08, op_s=0x03, src2=0x06);
+
+    b_nrp.set_asm("b .%unit NRP");
+    b_nrp.set_decoder(op_s2=0x08, op_s=0x03, src2=0x07);
+
+    clr.set_asm("clr .%unit %src2, %src1, %dst");
+    clr.set_decoder(op_s2=0x08, op_s=0x3B);
+
+    clr_k.set_asm("clr .%unit %src2, %csta, %cstb, %dst");
+    clr_k.set_decoder(op_k=0x22);
+
+    cmpeq_iii.set_asm("cmpeq .%unit %src1, %src2, %dst");
+    cmpeq_iii.set_decoder(op_l2=0x6, op_l=0x53);
+
+    cmpeq_cii.set_asm("cmpeq .%unit %src1, %src2, %dst");
+    cmpeq_cii.set_decoder(op_l2=0x6, op_l=0x52);
+
+    cmpeq_ili.set_asm("cmpeq .%unit %src1, %src2, %dst");
+    cmpeq_ili.set_decoder(op_l2=0x6, op_l=0x51);
+
+    cmpeq_cli.set_asm("cmpeq .%unit %src1, %src2, %dst");
+    cmpeq_cli.set_decoder(op_l2=0x6, op_l=0x50);
+
+    cmpgt_iii.set_asm("cmpgt .%unit %src1, %src2, %dst");
+    cmpgt_iii.set_decoder(op_l2=0x6, op_l=0x47);
+
+    cmpgt_cii.set_asm("cmpgt .%unit %src1, %src2, %dst");
+    cmpgt_cii.set_decoder(op_l2=0x6, op_l=0x46);
+
+    cmpgt_ili.set_asm("cmpgt .%unit %src1, %src2, %dst");
+    cmpgt_ili.set_decoder(op_l2=0x6, op_l=0x45);
+
+    cmpgt_cli.set_asm("cmpgt .%unit %src1, %src2, %dst");
+    cmpgt_cli.set_decoder(op_l2=0x6, op_l=0x44);
+
+    cmpgtu_iii.set_asm("cmpgtu .%unit %src1, %src2, %dst");
+    cmpgtu_iii.set_decoder(op_l2=0x6, op_l=0x4F);
+
+    cmpgtu_cii.set_asm("cmpgtu .%unit %src1, %src2, %dst");
+    cmpgtu_cii.set_decoder(op_l2=0x6, op_l=0x4E);
+
+    cmpgtu_ili.set_asm("cmpgtu .%unit %src1, %src2, %dst");
+    cmpgtu_ili.set_decoder(op_l2=0x6, op_l=0x4D);
+
+    cmpgtu_cli.set_asm("cmpgtu .%unit %src1, %src2, %dst");
+    cmpgtu_cli.set_decoder(op_l2=0x6, op_l=0x4C);
+
+    cmplt_iii.set_asm("cmplt .%unit %src1, %src2, %dst");
+    cmplt_iii.set_decoder(op_l2=0x6, op_l=0x57);
+
+    cmplt_cii.set_asm("cmplt .%unit %src1, %src2, %dst");
+    cmplt_cii.set_decoder(op_l2=0x6, op_l=0x56);
+
+    cmplt_ili.set_asm("cmplt .%unit %src1, %src2, %dst");
+    cmplt_ili.set_decoder(op_l2=0x6, op_l=0x55);
+
+    cmplt_cli.set_asm("cmplt .%unit %src1, %src2, %dst");
+    cmplt_cli.set_decoder(op_l2=0x6, op_l=0x54);
+
+    cmpltu_iii.set_asm("cmpltu .%unit %src1, %src2, %dst");
+    cmpltu_iii.set_decoder(op_l2=0x6, op_l=0x5F);
+
+    cmpltu_cii.set_asm("cmpltu .%unit %src1, %src2, %dst");
+    cmpltu_cii.set_decoder(op_l2=0x6, op_l=0x5E);
+
+    cmpltu_ili.set_asm("cmpltu .%unit %src1, %src2, %dst");
+    cmpltu_ili.set_decoder(op_l2=0x6, op_l=0x5D);
+
+    cmpltu_cli.set_asm("cmpltu .%unit %src1, %src2, %dst");
+    cmpltu_cli.set_decoder(op_l2=0x6, op_l=0x5C);
+
+    ext_k.set_asm("ext .%unit %src2, %csta, %cstb, %dst");
+    ext_k.set_decoder(op_k=0x12);
+
+    ext.set_asm("ext .%unit %src2, %src1, %dst");
+    ext.set_decoder(op_s2=0x08, op_s=0x2F);
+
+    extu_k.set_asm("ext .%unit %src2, %csta, %cstb, %dst");
+    extu_k.set_decoder(op_k=0x02);
+
+    extu.set_asm("ext .%unit %src2, %src1, %dst");
+    extu.set_decoder(op_s2=0x08, op_s=0x2B);
+
+    idle.set_asm("idle");
+    idle.set_decoder(op_idle=0x7800);
+
+    ldb.set_asm("ldb .%unit %op %baseR [%offsetR], %dst");
+    ldb.set_decoder(op_ld = 0x01, ld_st=0x02);
+
+    ldbu.set_asm("ldbu .%unit %op %baseR [%offsetR], %dst");
+    ldbu.set_decoder(op_ld = 0x01, ld_st=0x01);
+
+    ldh.set_asm("ldh .%unit %op %baseR [%offsetR], %dst");
+    ldh.set_decoder(op_ld = 0x01, ld_st=0x04);
+
+    ldhu.set_asm("ldhu .%unit %op %baseR [%offsetR], %dst");
+    ldhu.set_decoder(op_ld = 0x01, ld_st=0x00);
+
+    ldw.set_asm("ldh .%unit %op %baseR [%offsetR], %dst");
+    ldw.set_decoder(op_ld = 0x01, ld_st=0x06);
+		
+    ldb_k.set_asm("ldb .%unit %op %baseR [%ucst], %dst");
+    ldb_k.set_decoder(op_ld = 0x03, ld_st=0x02);
+
+    ldbu_k.set_asm("ldbu .%unit %op %baseR [%ucst], %dst");
+    ldbu_k.set_decoder(op_ld = 0x03, ld_st=0x01);
+
+    ldh_k.set_asm("ldh .%unit %op %baseR [%ucst], %dst");
+    ldh_k.set_decoder(op_ld = 0x03, ld_st=0x04);
+
+    ldhu_k.set_asm("ldhu .%unit %op %baseR [%ucst], %dst");
+    ldhu_k.set_decoder(op_ld = 0x03, ld_st=0x00);
+
+    ldw_k.set_asm("ldh .%unit %op %baseR [%ucst], %dst");
+    ldw_k.set_decoder(op_ld = 0x03, ld_st=0x06);
+
+    lmbd_iii.set_asm("lmbd .%unit %src1, %src2, %dst");
+    lmbd_iii.set_decoder(op_l2 = 0x06, op_l=0x6B);
+
+    lmbd_cii.set_asm("lmbd .%unit %src1, %src2, %dst");
+    lmbd_cii.set_decoder(op_l2 = 0x06, op_l=0x6A);
+
+    mpy.set_asm("mpy .%unit %src1, %src2, %dst");
+    mpy.set_decoder(op_m2 = 0x00, op_m=0x19);
+
+    mpy_k.set_asm("mpy .%unit %src1, %src2, %dst");
+    mpy_k.set_decoder(op_m2 = 0x00, op_m=0x18);
+
+    mpyu.set_asm("mpyu .%unit %src1, %src2, %dst");
+    mpyu.set_decoder(op_m2 = 0x00, op_m=0x1F);
+
+    mpyus.set_asm("mpyus .%unit %src1, %src2, %dst");
+    mpyus.set_decoder(op_m2 = 0x00, op_m=0x1D);
+
+    mpysu.set_asm("mpysu .%unit %src1, %src2, %dst");
+    mpysu.set_decoder(op_m2 = 0x00, op_m=0x1B);
+
+    mpysu_k.set_asm("mpysu .%unit %src1, %src2, %dst");
+    mpysu_k.set_decoder(op_m2 = 0x00, op_m=0x1E);
+
+    mpyh.set_asm("mpyh .%unit %src1, %src2, %dst");
+    mpyh.set_decoder(op_m2 = 0x00, op_m=0x01);
+
+    mpyhu.set_asm("mpyhu .%unit %src1, %src2, %dst");
+    mpyhu.set_decoder(op_m2 = 0x00, op_m=0x07);
+
+    mpyhus.set_asm("mpyhus .%unit %src1, %src2, %dst");
+    mpyhus.set_decoder(op_m2 = 0x00, op_m=0x05);
+
+    mpyhsu.set_asm("mpyhsu .%unit %src1, %src2, %dst");
+    mpyhsu.set_decoder(op_m2 = 0x00, op_m=0x03);
+
+    mpyhl.set_asm("mpyhl .%unit %src1, %src2, %dst");
+    mpyhl.set_decoder(op_m2 = 0x00, op_m=0x09);
+
+    mpyhlu.set_asm("mpyhlu .%unit %src1, %src2, %dst");
+    mpyhlu.set_decoder(op_m2 = 0x00, op_m=0x0F);
+
+    mpyhuls.set_asm("mpyhuls .%unit %src1, %src2, %dst");
+    mpyhuls.set_decoder(op_m2 = 0x00, op_m=0x0D);
+
+    mpyhslu.set_asm("mpyhslu .%unit %src1, %src2, %dst");
+    mpyhslu.set_decoder(op_m2 = 0x00, op_m=0x0B);
+
+    mpylh.set_asm("mpylh .%unit %src1, %src2, %dst");
+    mpylh.set_decoder(op_m2 = 0x00, op_m=0x11);
+
+    mpylhu.set_asm("mpylhu .%unit %src1, %src2, %dst");
+    mpylhu.set_decoder(op_m2 = 0x00, op_m=0x17);
+
+    mpyluhs.set_asm("mpyluhs .%unit %src1, %src2, %dst");
+    mpyluhs.set_decoder(op_m2 = 0x00, op_m=0x15);
+
+    mpylshu.set_asm("mpylshu .%unit %src1, %src2, %dst");
+    mpylshu.set_decoder(op_m2 = 0x00, op_m=0x13);
+
+    mvc_cr.set_asm("mvc .%unit %src2, %dst");
+    mvc_cr.set_decoder(op_s2 = 0x08, op_s=0x0F);
+
+    mvc_rc.set_asm("mvc .%unit %src2, %dst");
+    mvc_rc.set_decoder(op_s2 = 0x08, op_s=0x0E);
+
+    mvk.set_asm("mvk .%unit %cst, %dst");
+    mvk.set_decoder(op_sk=0x0A);
+
+    mvkh.set_asm("mvkh .%unit %cst, %dst");
+    mvkh.set_decoder(op_sk=0x1A);
+
+    nop.set_asm("nop  %count");
+    nop.set_decoder(op_n1=0x0, op_n2=0x000);
+
+    norm_ii.set_asm("norm  %unit %src2, %dst");
+    norm_ii.set_decoder(op_l2=0x6, op_l=0x63);
+
+    norm_li.set_asm("norm  %unit %src2, %dst");
+    norm_li.set_decoder(op_l2=0x6, op_l=0x60);
+
+    or_l_iii.set_asm("or  %unit %src1, %src2, %dst");
+    or_l_iii.set_decoder(op_l2=0x6, op_l=0x7F);
+
+    or_l_cii.set_asm("or  %unit %src1, %src2, %dst");
+    or_l_cii.set_decoder(op_l2=0x6, op_l=0x7E);
+
+    or_s_iii.set_asm("or  %unit %src1, %src2, %dst");
+    or_s_iii.set_decoder(op_s2=0x8, op_s=0x1B);
+
+    or_s_cii.set_asm("or  %unit %src1, %src2, %dst");
+    or_s_cii.set_decoder(op_s2=0x8, op_s=0x1A);
+
+    sadd_iii.set_asm("sadd  %unit %src1, %src2, %dst");
+    sadd_iii.set_decoder(op_l2=0x6, op_l=0x13);
+
+    sadd_ill.set_asm("sadd  %unit %src1, %src2, %dst");
+    sadd_ill.set_decoder(op_l2=0x6, op_l=0x31);
+
+    sadd_cii.set_asm("sadd  %unit %src1, %src2, %dst");
+    sadd_cii.set_decoder(op_l2=0x6, op_l=0x12);
+
+    sadd_cll.set_asm("sadd  %unit %src1, %src2, %dst");
+    sadd_cll.set_decoder(op_l2=0x6, op_l=0x30);
+
+    sat.set_asm("sat %unit %src2, %dst");
+    sat.set_decoder(op_l2=0x6, op_l=0x40);
+
+    set_field.set_asm("set %unit %src2,%src1, %dst");
+    set_field.set_decoder(op_s2=0x8, op_s=0x3B);
+
+    set_k.set_asm("set %unit %src2, %csta, %cstb, %dst");
+    set_k.set_decoder(op_k=0x22);
+
+    shl_iii.set_asm("shl %unit %src2,%src1, %dst");
+    shl_iii.set_decoder(op_s2=0x8, op_s=0x33);
+
+    shl_lil.set_asm("shl %unit %src2,%src1, %dst");
+    shl_lil.set_decoder(op_s2=0x8, op_s=0x31);
+
+    shl_iil.set_asm("shl %unit %src2,%src1, %dst");
+    shl_iil.set_decoder(op_s2=0x8, op_s=0x13);
+
+    shl_ici.set_asm("shl %unit %src2,%src1, %dst");
+    shl_ici.set_decoder(op_s2=0x8, op_s=0x32);
+
+    shl_lcl.set_asm("shl %unit %src2,%src1, %dst");
+    shl_lcl.set_decoder(op_s2=0x8, op_s=0x30);
+
+    shl_icl.set_asm("shl %unit %src2,%src1, %dst");
+    shl_icl.set_decoder(op_s2=0x8, op_s=0x12);
+
+    shr_iii.set_asm("shr %unit %src2,%src1, %dst");
+    shr_iii.set_decoder(op_s2=0x8, op_s=0x37);
+
+    shr_lil.set_asm("shr %unit %src2,%src1, %dst");
+    shr_lil.set_decoder(op_s2=0x8, op_s=0x35);
+
+    shr_ici.set_asm("shr %unit %src2,%src1, %dst");
+    shr_ici.set_decoder(op_s2=0x8, op_s=0x36);
+
+    shr_lcl.set_asm("shr %unit %src2,%src1, %dst");
+    shr_lcl.set_decoder(op_s2=0x8, op_s=0x34);
+
+    shru_iii.set_asm("shru %unit %src2,%src1, %dst");
+    shru_iii.set_decoder(op_s2=0x8, op_s=0x27);
+
+    shru_lil.set_asm("shru %unit %src2,%src1, %dst");
+    shru_lil.set_decoder(op_s2=0x8, op_s=0x25);
+
+    shru_ici.set_asm("shru %unit %src2,%src1, %dst");
+    shru_ici.set_decoder(op_s2=0x8, op_s=0x26);
+
+    shru_lcl.set_asm("shru %unit %src2,%src1, %dst");
+    shru_lcl.set_decoder(op_s2=0x8, op_s=0x24);
+
+    smpy.set_asm("smpy .%unit %src1, %src2, %dst");
+    smpy.set_decoder(op_m2 = 0x00, op_m=0x1A);
+
+    smpyhl.set_asm("smpyhl .%unit %src1, %src2, %dst");
+    smpyhl.set_decoder(op_m2 = 0x00, op_m=0x0A);
+
+    smpylh.set_asm("smpylh .%unit %src1, %src2, %dst");
+    smpylh.set_decoder(op_m2 = 0x00, op_m=0x12);
+
+    smpyh.set_asm("smpyh .%unit %src1, %src2, %dst");
+    smpyh.set_decoder(op_m2 = 0x00, op_m=0x02);
+
+    sshl_iii.set_asm("sshl %unit %src2,%src1, %dst");
+    sshl_iii.set_decoder(op_s2=0x8, op_s=0x23);
+
+    sshl_ici.set_asm("sshl %unit %src2,%src1, %dst");
+    sshl_ici.set_decoder(op_s2=0x8, op_s=0x22);
+
+    ssub_iii.set_asm("ssub  %unit %src1, %src2, %dst");
+    ssub_iii.set_decoder(op_l2=0x6, op_l=0x0F);
+
+    ssub_xiii.set_asm("ssub  %unit %src1, %src2, %dst");
+    ssub_xiii.set_decoder(op_l2=0x6, op_l=0x1F);
+
+    ssub_cii.set_asm("ssub  %unit %src1, %src2, %dst");
+    ssub_cii.set_decoder(op_l2=0x6, op_l=0x0E);
+
+    ssub_cll.set_asm("ssub  %unit %src1, %src2, %dst");
+    ssub_cll.set_decoder(op_l2=0x6, op_l=0x2C);
+
+    stb.set_asm("stb .%unit %src, %op %baseR [%offsetR]");
+    stb.set_decoder(op_ld = 0x01, ld_st=0x03);
+
+    sth.set_asm("sth .%unit %src, %op %baseR [%offsetR]");
+    sth.set_decoder(op_ld = 0x01, ld_st=0x05);
+
+    stw.set_asm("stw .%unit %src, %op %baseR [%offsetR]");
+    stw.set_decoder(op_ld = 0x01, ld_st=0x07);
+
+    stb_k.set_asm("stb .%unit %src, %op %baseR [%offsetR]");
+    stb_k.set_decoder(op_ld = 0x03, ld_st=0x03);
+
+    sth_k.set_asm("sth .%unit %src, %op %baseR [%offsetR]");
+    sth_k.set_decoder(op_ld = 0x03, ld_st=0x05);
+
+    stw_k.set_asm("stw .%unit %src, %op %baseR [%offsetR]");
+    stw_k.set_decoder(op_ld = 0x03, ld_st=0x07);
+
+    sub_l_iii.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_l_iii.set_decoder(op_l2=0x6, op_l=0x07);
+    
+    sub_l_xiii.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_l_xiii.set_decoder(op_l2=0x6, op_l=0x17);
+    
+    sub_l_iil.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_l_iil.set_decoder(op_l2=0x6, op_l=0x27);
+    
+    sub_l_xiil.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_l_xiil.set_decoder(op_l2=0x6, op_l=0x37);
+    
+    sub_l_cii.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_l_cii.set_decoder(op_l2=0x6, op_l=0x06);
+    
+    sub_l_cll.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_l_cll.set_decoder(op_l2=0x6, op_l=0x24);
+    
+    subu_iil.set_asm("subu .%unit %src1, %src2, %dst");
+    subu_iil.set_decoder(op_l2=0x6, op_l=0x2F);
+    
+    subu_xiil.set_asm("subu .%unit %src1, %src2, %dst");
+    subu_xiil.set_decoder(op_l2=0x6, op_l=0x3F);
+    
+    sub_s_iii.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_s_iii.set_decoder(op_s2=0x8, op_s=0x17);
+    
+    sub_s_cii.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_s_cii.set_decoder(op_s2=0x8, op_s=0x16);
+    
+    sub_d_iii.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_d_iii.set_decoder(op_d2=0x10, op_d=0x11);
+    
+    sub_d_ici.set_asm("sub .%unit %src1, %src2, %dst");
+    sub_d_ici.set_decoder(op_d2=0x10, op_d=0x13);
+    
+    subab_iii.set_asm("subab .%unit %src1, %src2, %dst");
+    subab_iii.set_decoder(op_d2=0x10, op_d=0x31);
+    
+    subab_ici.set_asm("subab .%unit %src1, %src2, %dst");
+    subab_ici.set_decoder(op_d2=0x10, op_d=0x33);
+    
+    subah_iii.set_asm("subah .%unit %src1, %src2, %dst");
+    subah_iii.set_decoder(op_d2=0x10, op_d=0x35);
+    
+    subah_ici.set_asm("subah .%unit %src1, %src2, %dst");
+    subah_ici.set_decoder(op_d2=0x10, op_d=0x37);
+    
+    subaw_iii.set_asm("subaw .%unit %src1, %src2, %dst");
+    subaw_iii.set_decoder(op_d2=0x10, op_d=0x39);
+    
+    subaw_ici.set_asm("subaw .%unit %src1, %src2, %dst");
+    subaw_ici.set_decoder(op_d2=0x10, op_d=0x3B);
+    
+    subc.set_asm("subc .%unit %src1, %src2, %dst");
+    subc.set_decoder(op_l2=0x6, op_l=0x4B);
+    
+    sub2.set_asm("sub2 .%unit %src1, %src2, %dst");
+    sub2.set_decoder(op_s2=0x8, op_s=0x11);
+    
+    xor_l_iii.set_asm("xor  %unit %src1, %src2, %dst");
+    xor_l_iii.set_decoder(op_l2=0x6, op_l=0x6F);
+
+    xor_l_cii.set_asm("xor  %unit %src1, %src2, %dst");
+    xor_l_cii.set_decoder(op_l2=0x6, op_l=0x6E);
+
+    xor_s_iii.set_asm("xor  %unit %src1, %src2, %dst");
+    xor_s_iii.set_decoder(op_s2=0x8, op_s=0x0B);
+
+    xor_s_cii.set_asm("xor  %unit %src1, %src2, %dst");
+    xor_s_cii.set_decoder(op_s2=0x8, op_s=0x0A);
+
+
+  };
+};
