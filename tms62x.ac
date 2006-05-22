@@ -2,7 +2,7 @@ AC_ARCH(tmsc62x){
 
   ac_wordsize 32;
 
-  ac_cache   MEM:5M;
+  ac_mem   MEM:5M;
 
   ac_regbank RB_A:16;
   ac_regbank RB_B:16;  
