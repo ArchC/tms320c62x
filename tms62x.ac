@@ -1,5 +1,5 @@
 /**
- * @file      file?
+ * @file      tms62x.ac
  * @author    Sandro Rigo
  *
  *            The ArchC Team
@@ -9,8 +9,8 @@
  *            IC-UNICAMP
  *            http://www.lsc.ic.unicamp.br
  *
- * @version   version?
- * @date      date?
+ * @version   1.0
+ * @date      Thu, 29 Jun 2006 14:49:09 -0300
  * 
  * @brief     The ArchC TMS320C62x DSP model.
  * 
